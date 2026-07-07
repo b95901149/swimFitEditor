@@ -1,0 +1,21 @@
+@echo off
+chcp 65001 >nul
+echo.
+echo  游泳 FIT 趟數修正器 — 瀏覽器版 v1.0.0
+echo  =====================================
+echo.
+echo  1. 解壓縮後，用 Chrome / Edge / Firefox 開啟 index.html
+echo     （雙擊 index.html 即可，不需安裝、不需架設伺服器）
+echo.
+echo  2. 把 Garmin 游泳 .fit 檔拖進頁面，或點選檔案載入
+echo.
+echo  3. 修正完成後按「下載修正檔」取得 _fixed.fit
+echo.
+echo  注意：
+echo  - 全程在本機執行，檔案不會上傳
+echo  - 請勿在 IDE 內建預覽面板使用（無法正常選檔）
+echo  - 本版無 .fit 檔案關聯；若需雙擊 .fit 開啟，請用安裝版
+echo.
+echo  完整圖文說明：專案 docs/USAGE.md（GitHub 倉庫）
+echo.
+pause

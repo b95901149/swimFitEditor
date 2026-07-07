@@ -1,8 +1,11 @@
 node_modules/
 dist-app/
-release/
+release/.browser-staging/
 .claude/
 
 .DS_Store
 Thumbs.db
 *.log
+
+# Keep demo fixtures; sample-swim.fit is a small public test vector.
+# docs/images/*.png are generated — commit them for GitHub rendering.
