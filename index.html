@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>游泳 FIT 趟數修正器</title>
+<style>
+  :root {
+    --bg: #0f172a; --panel: #1e293b; --panel2: #273449; --line: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --accent2: #0ea5e9;
+    --warn: #f59e0b; --warnbg: #422006; --bad: #ef4444; --badbg: #450a0a;
+    --sel: #fde047;
+    --s0:#34d399; --s1:#f472b6; --s2:#38bdf8; --s3:#fbbf24; --s4:#94a3b8; --s5:#a78bfa; --s6:#22d3ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: "Segoe UI", system-ui, -apple-system, "Microsoft JhengHei", sans-serif;
+    background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;
+  }
+  header {
+    padding: 16px 24px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 19px; margin: 0; font-weight: 650; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  main { padding: 18px 24px 60px; max-width: 1260px; margin: 0 auto; }
+  h2 { font-size: 17px; margin: 4px 0 12px; }
+
+  .drop {
+    border: 2px dashed var(--line); border-radius: 12px; padding: 40px 20px;
+    text-align: center; color: var(--muted); cursor: pointer; transition: .15s; background: var(--panel);
+  }
+  .drop.hover { border-color: var(--accent); color: var(--text); background: var(--panel2); }
+  .drop strong { color: var(--text); }
+  .drop input { display: none; }
+
+  button {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    font-family: inherit; transition: .12s; white-space: nowrap;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); background: #31425c; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--accent2); border-color: var(--accent2); color: #04121e; font-weight: 650; }
+  button.primary:hover:not(:disabled) { background: var(--accent); }
+  button.small { padding: 3px 8px; font-size: 12px; border-radius: 6px; }
+  select {
+    background: var(--bg); border: 1px solid var(--line); color: var(--text);
+    padding: 6px 8px; border-radius: 6px; font-family: inherit; font-size: 13px;
+  }
+  select.small { padding: 3px 6px; font-size: 12px; }
+
+  .cards { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 14px; min-width: 96px; }
+  .card .k { color: var(--muted); font-size: 11.5px; }
+  .card .v { font-size: 18px; font-weight: 650; margin-top: 2px; }
+  .card .d { font-size: 11px; margin-top: 1px; }
+  .d.up { color: var(--warn); } .d.same { color: var(--muted); }
+
+  .toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin: 12px 0; padding: 10px 12px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  .toolbar .sep { width: 1px; height: 26px; background: var(--line); margin: 0 3px; }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .selinfo { color: var(--muted); font-size: 12.5px; }
+  .toolbar .selinfo b { color: var(--sel); }
+  .toolbar .fname { color: var(--muted); font-size: 12px; }
+
+  .chartwrap { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 6px 4px; overflow-x: auto; }
+  svg.chart { display: block; width: 100%; height: 380px; }
+  svg.chart .bar { cursor: pointer; }
+  svg.chart .bar:hover { filter: brightness(1.15); }
+  svg.chart .grid { stroke: var(--line); stroke-width: 1; }
+  svg.chart .axis { fill: var(--muted); font-size: 11px; }
+  svg.chart .lap { stroke: var(--text); stroke-width: 1.4; stroke-dasharray: 4 4; opacity: .8; }
+  .hint { color: var(--muted); font-size: 12.5px; margin: 8px 2px 0; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 2px 0; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  details.table { margin-top: 22px; }
+  details.table summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; position: sticky; top: 0; background: var(--bg); }
+  th:first-child, td:first-child { text-align: center; }
+  th.l, td.l { text-align: left; }
+  tbody tr:hover { background: var(--panel); }
+  tbody tr.selected td { background: #2b2f10; }
+  tr.short td { background: var(--warnbg); }
+  tr.fast td { background: var(--badbg); }
+  td.actions { text-align: center; }
+  .badge { font-size: 11px; padding: 1px 6px; border-radius: 10px; }
+  .badge.short { background: var(--warn); color: #1a1200; }
+  .badge.fast { background: var(--bad); color: #200; }
+
+  .log { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; max-height: 200px; overflow: auto; font-size: 12.5px; color: var(--muted); }
+  .log div { padding: 1px 0; }
+  .log .warn { color: var(--warn); }
+  .hidden { display: none; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 24px; }
+  a { color: var(--accent); }
+
+  #tip { position: fixed; pointer-events: none; background: #020617; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 12px; color: var(--text); z-index: 50; display: none; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+  #tip b { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏊 游泳 FIT 趟數修正器</h1>
+  <span class="sub">拖入 Garmin .fit 檔 → 視覺化檢視 → 合併多算的趟 → 下載修正後的 .fit。全程本機執行，檔案不會上傳。</span>
+</header>
+
+<main>
+  <div id="drop" class="drop">
+    <p><strong>點此選擇</strong> 或把 <strong>.fit</strong> 檔拖進來</p>
+    <p style="font-size:12px">支援 25m/50m 泳池的分趟（length）資料</p>
+    <input id="file" type="file" accept=".fit">
+  </div>
+
+  <div id="app" class="hidden">
+    <h2>Visual Editor</h2>
+    <div class="cards" id="cards"></div>
+
+    <div class="toolbar">
+      <button id="mergeBtn" title="把選取的相鄰趟合併成一趟">⇄ 合併選取</button>
+      <button id="splitBtn" title="把選取的每趟平均分割成兩趟">⤪ 分割選取</button>
+      <button id="delBtn" title="刪除選取的趟（幽靈趟）">🗑 刪除選取</button>
+      <button id="delFastBtn" title="自動刪除配速異常的短趟（幽靈趟）">🗑 刪配速異常</button>
+      <span class="sep"></span>
+      <select id="strokeSel" class="small" title="泳姿">
+        <option value="0">自由式</option><option value="1">仰式</option>
+        <option value="2" selected>蛙式</option><option value="3">蝶式</option>
+        <option value="4">drill</option><option value="5">混合</option><option value="6">個人混合</option>
+      </select>
+      <button id="strokeSelBtn" title="把上面泳姿套用到選取的趟">🏊 改選取泳姿</button>
+      <button id="strokeAllBtn" title="一鍵把上面泳姿套用到全部趟">🏊 全部改此泳姿</button>
+      <span class="sep"></span>
+      <button id="autoBtn" title="自動合併異常短趟">⚡ 自動合併短趟</button>
+      <label class="selinfo">門檻 <input id="thresh" type="number" step="1" min="1" value="30" style="width:52px;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:4px 6px;border-radius:6px"> 秒</label>
+      <span class="sep"></span>
+      <button id="undoBtn" title="復原上一步" disabled>↶ 復原</button>
+      <button id="resetBtn" title="還原到剛載入的原始資料">↺ 還原</button>
+      <span class="spacer"></span>
+      <span class="selinfo" id="selinfo">未選取</span>
+      <span class="fname" id="fname"></span>
+      <button id="dlBtn" class="primary" title="下載修正後的 .fit">⬇ 下載修正檔</button>
+    </div>
+
+    <div class="chartwrap"><svg id="chart" class="chart"></svg></div>
+    <div class="legend" id="legend"></div>
+    <p class="hint">點長條可選取（可多選）；再按上方工具列的動作套用。虛線代表一個 lap（interval）的開始。也可以在下方明細表操作。</p>
+
+    <details class="table">
+      <summary>展開逐趟明細表</summary>
+      <table>
+        <thead><tr>
+          <th>選</th><th>#</th><th class="l">開始時間</th><th class="l">泳姿</th>
+          <th>時間</th><th>划手</th><th>速度</th><th>配速/100m</th><th>頻率</th><th></th><th>操作</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </details>
+
+    <div class="log" id="log"></div>
+  </div>
+</main>
+
+<div id="tip"></div>
+<footer>本機工具 · 靈感來自 swimdata.org · 逐位元保留未修改的原始欄位</footer>
+
+<script>
+/*
+ * fit_core.js — DOM-free FIT swim-file engine.
+ *
+ * Parses a Garmin .fit swim activity, exposes an editable list of pool
+ * "lengths" (25m/50m etc. laps), supports merge / split / auto-merge, and
+ * re-encodes a byte-faithful .fit that only touches the fields it must
+ * (every unrelated vendor byte is preserved). Works in the browser (attaches
+ * to window.FitCore) and in Node (module.exports).
+ *
+ * FIT field numbers below were verified empirically against fitparse's decoded
+ * values for this file family, not assumed.
+ */
+(function (root) {
+  'use strict';
+
+  // ---- base type table: FIT base_type -> byte size + DataView accessors ----
+  const BASE_TYPE = {
+    0x00: { size: 1, get: 'getUint8', set: 'setUint8', invalid: 0xFF },       // enum
+    0x01: { size: 1, get: 'getInt8', set: 'setInt8', invalid: 0x7F },         // sint8
+    0x02: { size: 1, get: 'getUint8', set: 'setUint8', invalid: 0xFF },       // uint8
+    0x83: { size: 2, get: 'getInt16', set: 'setInt16', invalid: 0x7FFF },     // sint16
+    0x84: { size: 2, get: 'getUint16', set: 'setUint16', invalid: 0xFFFF },   // uint16
+    0x85: { size: 4, get: 'getInt32', set: 'setInt32', invalid: 0x7FFFFFFF }, // sint32
+    0x86: { size: 4, get: 'getUint32', set: 'setUint32', invalid: 0xFFFFFFFF },// uint32
+    0x07: { size: 1, get: null, set: null, invalid: 0x00 },                   // string
+    0x88: { size: 2, get: 'getInt16', set: 'setInt16', invalid: 0x7FFF },     // float16-ish (rare)
+    0x89: { size: 4, get: 'getInt32', set: 'setInt32', invalid: 0x7FFFFFFF },
+    0x8A: { size: 8, get: null, set: null, invalid: 0 },
+    0x0B: { size: 1, get: 'getUint8', set: 'setUint8', invalid: 0x00 },       // uint8z
+    0x0C: { size: 4, get: 'getUint32', set: 'setUint32', invalid: 0x00 },     // uint32z
+    0x0D: { size: 1, get: 'getUint8', set: 'setUint8', invalid: 0xFF },       // byte
+    0x8E: { size: 8, get: null, set: null, invalid: 0 },
+    0x8F: { size: 8, get: null, set: null, invalid: 0 },
+    0x90: { size: 4, get: 'getFloat32', set: 'setFloat32', invalid: 0xFFFFFFFF },
+    0x91: { size: 8, get: 'getFloat64', set: 'setFloat64', invalid: 0 },
+  };
+
+  // ---- global message numbers ----
+  const MESG_SESSION = 18;
+  const MESG_LAP = 19;
+  const MESG_LENGTH = 101;
+
+  // ---- length message field numbers ----
+  const L_MESSAGE_INDEX = 254;
+  const L_TIMESTAMP = 253;
+  const L_START_TIME = 2;
+  const L_TOTAL_ELAPSED_TIME = 3; // uint32, scale 1000 (s)
+  const L_TOTAL_TIMER_TIME = 4;   // uint32, scale 1000 (s)
+  const L_TOTAL_STROKES = 5;      // uint16
+  const L_AVG_SPEED = 6;          // uint16, scale 1000 (m/s)
+  const L_SWIM_STROKE = 7;        // enum
+  const L_AVG_SWIM_CADENCE = 9;   // uint8 (strokes/min)
+  const L_TOTAL_CALORIES = 11;    // uint16
+  const L_LENGTH_TYPE = 12;       // enum: 0=idle/rest, 1=active
+
+  // ---- lap message field numbers ----
+  const LAP_TOTAL_DISTANCE = 9;      // uint32, scale 100 (m)
+  const LAP_TOTAL_CYCLES = 10;       // uint32 (total strokes)
+  const LAP_NUM_LENGTHS = 32;        // uint16
+  const LAP_NUM_ACTIVE_LENGTHS = 40; // uint16
+  const LAP_FIRST_LENGTH_INDEX = 35; // uint16
+
+  // ---- session message field numbers ----
+  const SES_TOTAL_DISTANCE = 9;      // uint32, scale 100 (m)
+  const SES_TOTAL_CYCLES = 10;       // uint32 (total strokes)
+  const SES_START_TIME = 2;          // uint32 (FIT timestamp)
+  const SES_TOTAL_TIMER_TIME = 8;    // uint32, scale 1000 (s)
+  const SES_TOTAL_CALORIES = 11;     // uint16 (kcal)
+  const SES_AVG_HEART_RATE = 16;     // uint8 (bpm)
+  const SES_POOL_LENGTH = 44;        // uint16, scale 100 (m)
+  const SES_NUM_ACTIVE_LENGTHS = 47; // uint16
+
+  const SWIM_STROKE_NAMES = {
+    0: 'freestyle', 1: 'backstroke', 2: 'breaststroke', 3: 'butterfly',
+    4: 'drill', 5: 'mixed', 6: 'im', 255: '—',
+  };
+
+  // ---------------------------------------------------------------------------
+  // CRC-16 (FIT spec)
+  // ---------------------------------------------------------------------------
+  const CRC_TABLE = [
+    0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,
+    0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400,
+  ];
+  function crc16(bytes, start, end) {
+    let crc = 0;
+    for (let i = start; i < end; i++) {
+      let tmp = CRC_TABLE[crc & 0xF];
+      crc = (crc >> 4) & 0x0FFF;
+      crc = crc ^ tmp ^ CRC_TABLE[bytes[i] & 0xF];
+      tmp = CRC_TABLE[crc & 0xF];
+      crc = (crc >> 4) & 0x0FFF;
+      crc = crc ^ tmp ^ CRC_TABLE[(bytes[i] >> 4) & 0xF];
+    }
+    return crc & 0xFFFF;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Parse
+  // ---------------------------------------------------------------------------
+  function parse(arrayBuffer) {
+    const bytes = new Uint8Array(arrayBuffer);
+    const dv = new DataView(arrayBuffer);
+    const headerSize = bytes[0];
+    const dataSize = dv.getUint32(4, true);
+    const magic = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    if (magic !== '.FIT') throw new Error('不是有效的 FIT 檔 (magic=' + magic + ')');
+    const dataStart = headerSize;
+    const dataEnd = headerSize + dataSize;
+
+    const localDefs = {};
+    const records = [];
+    let pos = dataStart;
+    while (pos < dataEnd) {
+      const recStart = pos;
+      const headerByte = bytes[pos];
+      let isDef, localType;
+      if (headerByte & 0x80) { // compressed timestamp header
+        isDef = false;
+        localType = (headerByte >> 5) & 0x03;
+        pos += 1;
+      } else {
+        isDef = !!(headerByte & 0x40);
+        localType = headerByte & 0x0F;
+        pos += 1;
+      }
+
+      if (isDef) {
+        const arch = bytes[pos + 1];
+        const little = arch === 0;
+        const globalNum = little ? dv.getUint16(pos + 2, true) : dv.getUint16(pos + 2, false);
+        const numFields = bytes[pos + 4];
+        let fpos = pos + 5;
+        const fields = [];
+        for (let i = 0; i < numFields; i++) {
+          fields.push({ defNum: bytes[fpos], size: bytes[fpos + 1], baseType: bytes[fpos + 2] });
+          fpos += 3;
+        }
+        const devFields = [];
+        if (headerByte & 0x20) {
+          const numDev = bytes[fpos];
+          fpos += 1;
+          for (let i = 0; i < numDev; i++) {
+            devFields.push({ defNum: bytes[fpos], size: bytes[fpos + 1] });
+            fpos += 3;
+          }
+        }
+        const def = { globalNum, little, fields, devFields };
+        localDefs[localType] = def;
+        pos = fpos;
+        records.push({ isDefinition: true, localType, rawStart: recStart, rawEnd: pos, def, globalNum });
+      } else {
+        const def = localDefs[localType];
+        if (!def) throw new Error('資料訊息缺少對應的定義 (local ' + localType + ')');
+        const headerLen = pos - recStart;
+        const fieldOffsets = {}; // defNum -> {offset, size, baseType} (relative to record start)
+        let fpos = pos;
+        for (const f of def.fields) {
+          if (!(f.defNum in fieldOffsets)) {
+            fieldOffsets[f.defNum] = { offset: fpos - recStart, size: f.size, baseType: f.baseType };
+          }
+          fpos += f.size;
+        }
+        for (const f of def.devFields) fpos += f.size;
+        pos = fpos;
+        records.push({
+          isDefinition: false, localType, rawStart: recStart, rawEnd: pos,
+          def, globalNum: def.globalNum, headerLen, fieldOffsets,
+        });
+      }
+    }
+
+    return { bytes, dv, headerSize, dataStart, dataEnd, records };
+  }
+
+  // Read a numeric field from the original buffer. Returns null if absent/unreadable.
+  function readField(parsed, rec, defNum) {
+    const fo = rec.fieldOffsets[defNum];
+    if (!fo) return null;
+    const bt = BASE_TYPE[fo.baseType];
+    if (!bt || !bt.get) return null;
+    if (fo.size !== bt.size) return null; // arrays not handled for our fields
+    const abs = rec.rawStart + fo.offset;
+    return parsed.dv[bt.get](abs, rec.def.little);
+  }
+
+  // Write a numeric field into a target DataView (record-local coordinates).
+  function writeField(targetDV, rec, defNum, value) {
+    const fo = rec.fieldOffsets[defNum];
+    if (!fo) return false;
+    const bt = BASE_TYPE[fo.baseType];
+    if (!bt || !bt.set) return false;
+    targetDV[bt.set](fo.offset, value, rec.def.little);
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build editable model
+  // ---------------------------------------------------------------------------
+  function buildModel(parsed) {
+    const lengthRecs = parsed.records.filter(r => !r.isDefinition && r.globalNum === MESG_LENGTH);
+    const lapRecs = parsed.records.filter(r => !r.isDefinition && r.globalNum === MESG_LAP);
+    const lapRec = lapRecs[0] || null;
+    const sesRec = parsed.records.find(r => !r.isDefinition && r.globalNum === MESG_SESSION) || null;
+
+    let poolLenM = 25.0;
+    let sessionInfo = { startTime: null, avgHr: null, calories: null, totalTimerMs: null };
+    if (sesRec) {
+      const raw = readField(parsed, sesRec, SES_POOL_LENGTH);
+      if (raw != null && raw !== BASE_TYPE[0x84].invalid) poolLenM = raw / 100.0;
+      const hr = readField(parsed, sesRec, SES_AVG_HEART_RATE);
+      const cal = readField(parsed, sesRec, SES_TOTAL_CALORIES);
+      const st = readField(parsed, sesRec, SES_START_TIME);
+      const tt = readField(parsed, sesRec, SES_TOTAL_TIMER_TIME);
+      sessionInfo = {
+        startTime: (st != null && st !== 0xFFFFFFFF) ? st : null,
+        avgHr: (hr != null && hr !== 0xFF) ? hr : null,
+        calories: (cal != null && cal !== 0xFFFF) ? cal : null,
+        totalTimerMs: (tt != null && tt !== 0xFFFFFFFF) ? tt : null,
+      };
+    }
+
+    // lap boundaries: the message_index at which each lap begins
+    const lapStartIdx = new Set();
+    for (const lr of lapRecs) {
+      const fi = readField(parsed, lr, LAP_FIRST_LENGTH_INDEX);
+      if (fi != null && fi !== 0xFFFF) lapStartIdx.add(fi);
+    }
+
+    let uid = 0;
+    const lengths = lengthRecs.map((rec) => {
+      const lengthType = readField(parsed, rec, L_LENGTH_TYPE);
+      const stroke = readField(parsed, rec, L_SWIM_STROKE);
+      const cal = readField(parsed, rec, L_TOTAL_CALORIES);
+      const mi = readField(parsed, rec, L_MESSAGE_INDEX);
+      return {
+        id: uid++,
+        recRef: rec,                 // template record for re-encoding
+        active: lengthType === 1 || lengthType == null,
+        swimStroke: stroke,
+        elapsedMs: readField(parsed, rec, L_TOTAL_ELAPSED_TIME),
+        timerMs: readField(parsed, rec, L_TOTAL_TIMER_TIME),
+        strokes: readField(parsed, rec, L_TOTAL_STROKES),
+        calories: (cal != null && cal !== 0xFFFF) ? cal : null,
+        startTime: readField(parsed, rec, L_START_TIME),
+        timestamp: readField(parsed, rec, L_TIMESTAMP),
+        origMessageIndex: mi,
+        lapStart: lapStartIdx.has(mi),
+      };
+    });
+    if (lengths.length && !lengths.some(l => l.lapStart)) lengths[0].lapStart = true;
+
+    return { parsed, lengths, lapRec, lapRecs, sesRec, poolLenM, sessionInfo };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Derived per-length values
+  // ---------------------------------------------------------------------------
+  function lengthMetrics(model, len) {
+    const dur = len.elapsedMs / 1000.0;
+    const speed = dur > 0 ? model.poolLenM / dur : 0;
+    const pacePer100 = speed > 0 ? 100.0 / speed : 0; // seconds/100m
+    const cadence = dur > 0 ? len.strokes / (dur / 60.0) : 0;
+    return { durationS: dur, speed, pacePer100, cadence };
+  }
+
+  function medianActiveDuration(model) {
+    const durs = model.lengths.filter(l => l.active).map(l => l.elapsedMs / 1000.0).sort((a, b) => a - b);
+    if (!durs.length) return 0;
+    const m = Math.floor(durs.length / 2);
+    return durs.length % 2 ? durs[m] : (durs[m - 1] + durs[m]) / 2;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Edit operations (mutate model.lengths)
+  // ---------------------------------------------------------------------------
+  // Fold length at index `src` into its neighbour at index `dst` (dst kept).
+  function mergeInto(model, dstIdx, srcIdx) {
+    const dst = model.lengths[dstIdx];
+    const src = model.lengths[srcIdx];
+    if (!dst || !src) return false;
+    dst.elapsedMs += src.elapsedMs;
+    dst.timerMs += src.timerMs;
+    dst.strokes += src.strokes;
+    if (dst.calories != null && src.calories != null) dst.calories += src.calories;
+    // combined length ends when the later of the two ends
+    if (src.timestamp != null && dst.timestamp != null) {
+      dst.timestamp = Math.max(dst.timestamp, src.timestamp);
+    }
+    // it starts when the earlier of the two starts
+    if (src.startTime != null && dst.startTime != null) {
+      dst.startTime = Math.min(dst.startTime, src.startTime);
+    }
+    dst.lapStart = dst.lapStart || src.lapStart;
+    model.lengths.splice(srcIdx, 1);
+    return true;
+  }
+
+  // Merge a set of selected indices. Contiguous runs collapse into one length
+  // each (folding all into the earliest of the run). Returns number removed.
+  function mergeSelected(model, indices) {
+    const sorted = [...new Set(indices)].sort((a, b) => a - b);
+    // group into contiguous runs
+    const runs = [];
+    for (const i of sorted) {
+      const last = runs[runs.length - 1];
+      if (last && i === last[last.length - 1] + 1) last.push(i);
+      else runs.push([i]);
+    }
+    let removed = 0;
+    // process runs right-to-left so earlier indices stay valid
+    for (const run of runs.reverse()) {
+      if (run.length < 2) continue;
+      const keep = run[0];
+      for (let k = run.length - 1; k >= 1; k--) {
+        mergeInto(model, keep, run[k]);
+        removed++;
+      }
+    }
+    return removed;
+  }
+
+  // Delete lengths at the given indices entirely (e.g. phantom lengths).
+  function deleteLengths(model, indices) {
+    const sorted = [...new Set(indices)].sort((a, b) => b - a);
+    for (const i of sorted) model.lengths.splice(i, 1);
+    if (model.lengths.length && !model.lengths.some(l => l.lapStart)) {
+      model.lengths[0].lapStart = true;
+    }
+    return sorted.length;
+  }
+
+  // Set stroke on the given indices (or all if indices omitted).
+  function setStroke(model, indices, stroke) {
+    const set = indices ? new Set(indices) : null;
+    model.lengths.forEach((L, i) => { if (!set || set.has(i)) L.swimStroke = stroke; });
+  }
+  function setStrokeAll(model, stroke) { setStroke(model, null, stroke); }
+
+  // Snapshot / restore for undo (length objects hold primitives + a stable
+  // recRef, so a shallow clone per length is a full logical copy).
+  function snapshot(model) { return model.lengths.map(L => Object.assign({}, L)); }
+  function restore(model, snap) { model.lengths = snap.map(L => Object.assign({}, L)); }
+
+  function mergeWithPrevious(model, idx) {
+    if (idx <= 0) return false;
+    return mergeInto(model, idx - 1, idx);
+  }
+  function mergeWithNext(model, idx) {
+    if (idx >= model.lengths.length - 1) return false;
+    return mergeInto(model, idx, idx + 1);
+  }
+
+  // Split length at idx into two at `firstSeconds` (default = half).
+  function splitLength(model, idx, firstSeconds) {
+    const len = model.lengths[idx];
+    if (!len) return false;
+    const totalS = len.elapsedMs / 1000.0;
+    let f = (firstSeconds == null) ? totalS / 2 : firstSeconds;
+    f = Math.max(0.5, Math.min(totalS - 0.5, f));
+    const firstMs = Math.round(f * 1000);
+    const secondMs = len.elapsedMs - firstMs;
+    const frac = firstMs / len.elapsedMs;
+    const firstStrokes = Math.max(0, Math.round(len.strokes * frac));
+    const secondStrokes = Math.max(0, len.strokes - firstStrokes);
+    const firstTimer = Math.round(len.timerMs * frac);
+    const secondTimer = len.timerMs - firstTimer;
+    let firstCal = null, secondCal = null;
+    if (len.calories != null) {
+      firstCal = Math.round(len.calories * frac);
+      secondCal = len.calories - firstCal;
+    }
+    const midTime = (len.startTime != null) ? len.startTime + Math.round(firstMs / 1000) : null;
+
+    const a = Object.assign({}, len, {
+      id: (model._nextId = (model._nextId || 1e6) + 1),
+      elapsedMs: firstMs, timerMs: firstTimer, strokes: firstStrokes,
+      calories: firstCal, timestamp: midTime,
+    });
+    const b = Object.assign({}, len, {
+      id: (model._nextId = (model._nextId || 1e6) + 1),
+      elapsedMs: secondMs, timerMs: secondTimer, strokes: secondStrokes,
+      calories: secondCal, startTime: midTime,
+    });
+    model.lengths.splice(idx, 1, a, b);
+    return true;
+  }
+
+  // Auto-merge: fold each abnormally short active length into the same-stroke
+  // neighbour whose combined duration lands closest to the median (bias to the
+  // previous length, per the requested "併入前段" behaviour). Returns a log.
+  function autoMerge(model, opts) {
+    opts = opts || {};
+    const median = medianActiveDuration(model);
+    const shortThresh = opts.shortSeconds != null ? opts.shortSeconds : median * 0.6;
+    const bandLo = (opts.bandLo != null ? opts.bandLo : 0.65) * median;
+    const bandHi = (opts.bandHi != null ? opts.bandHi : 1.35) * median;
+    const log = [];
+    let changed = true;
+    // repeat until stable (a merge can expose/resolve neighbours)
+    let guard = 0;
+    while (changed && guard++ < 1000) {
+      changed = false;
+      for (let i = 0; i < model.lengths.length; i++) {
+        const L = model.lengths[i];
+        if (!L.active) continue;
+        if (L.elapsedMs / 1000.0 >= shortThresh) continue;
+        // candidate neighbours: prev then next, same stroke, combined within band
+        const cand = [];
+        const prev = model.lengths[i - 1];
+        const next = model.lengths[i + 1];
+        if (prev && prev.active && prev.swimStroke === L.swimStroke) {
+          const combo = (prev.elapsedMs + L.elapsedMs) / 1000.0;
+          if (combo >= bandLo && combo <= bandHi) cand.push({ dir: 'prev', combo, bias: 0 });
+        }
+        if (next && next.active && next.swimStroke === L.swimStroke) {
+          const combo = (next.elapsedMs + L.elapsedMs) / 1000.0;
+          if (combo >= bandLo && combo <= bandHi) cand.push({ dir: 'next', combo, bias: 0.001 });
+        }
+        if (!cand.length) continue;
+        // choose closest-to-median; tie-break toward prev (smaller bias)
+        cand.sort((x, y) => (Math.abs(x.combo - median) + x.bias) - (Math.abs(y.combo - median) + y.bias));
+        const pick = cand[0];
+        if (pick.dir === 'prev') {
+          log.push('第 ' + (i + 1) + ' 段 (' + fmtDur(L.elapsedMs) + ') 併入前段 → ' + pick.combo.toFixed(1) + 's');
+          mergeWithPrevious(model, i);
+        } else {
+          log.push('第 ' + (i + 1) + ' 段 (' + fmtDur(L.elapsedMs) + ') 併入後段 → ' + pick.combo.toFixed(1) + 's');
+          mergeWithNext(model, i);
+        }
+        changed = true;
+        break; // indices shifted; restart scan
+      }
+    }
+    // report anything still short & unresolved
+    model.lengths.forEach((L, i) => {
+      if (L.active && L.elapsedMs / 1000.0 < shortThresh) {
+        log.push('⚠ 第 ' + (i + 1) + ' 段仍偏短 (' + fmtDur(L.elapsedMs) + '，' + (SWIM_STROKE_NAMES[L.swimStroke] || L.swimStroke) + ')，找不到合適的同泳姿鄰段，請手動處理');
+      }
+    });
+    return { log, median, shortThresh };
+  }
+
+  function fmtDur(ms) {
+    const s = ms / 1000.0;
+    return s.toFixed(1) + 's';
+  }
+
+  // Indices of active lengths whose pace is physically implausible: shorter
+  // than `shortSeconds` AND clearly faster than the field (leftover phantom
+  // lengths a merge could not resolve). Stroke-agnostic via median speed.
+  function findAbnormalPace(model, shortSeconds) {
+    const active = model.lengths.filter(l => l.active && l.elapsedMs > 0);
+    if (!active.length) return [];
+    const speeds = active.map(l => model.poolLenM / (l.elapsedMs / 1000)).sort((a, b) => a - b);
+    const medSpeed = speeds[Math.floor(speeds.length / 2)];
+    const out = [];
+    model.lengths.forEach((L, i) => {
+      if (!L.active || L.elapsedMs <= 0) return;
+      const dur = L.elapsedMs / 1000;
+      const sp = model.poolLenM / dur;
+      if (dur < shortSeconds && sp > medSpeed * 1.6) out.push(i);
+    });
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Summary
+  // ---------------------------------------------------------------------------
+  function summary(model) {
+    const active = model.lengths.filter(l => l.active);
+    const totalStrokes = model.lengths.reduce((a, l) => a + (l.strokes || 0), 0);
+    const movingMs = active.reduce((a, l) => a + l.elapsedMs, 0);
+    const distance = active.length * model.poolLenM;
+    const avgSpl = active.length ? totalStrokes / active.length : 0;
+    const distPerStroke = avgSpl > 0 ? model.poolLenM / avgSpl : 0;
+    return {
+      totalLengths: model.lengths.length,
+      activeLengths: active.length,
+      distance,
+      poolLenM: model.poolLenM,
+      totalStrokes,
+      movingMs,
+      avgSpl,
+      distPerStroke,
+      avgHr: model.sessionInfo ? model.sessionInfo.avgHr : null,
+      calories: model.sessionInfo ? model.sessionInfo.calories : null,
+      startTime: model.sessionInfo ? model.sessionInfo.startTime : null,
+      totalTimerMs: (model.sessionInfo && model.sessionInfo.totalTimerMs != null)
+        ? model.sessionInfo.totalTimerMs : movingMs,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Export: re-encode a byte-faithful .fit reflecting the edited model.
+  // ---------------------------------------------------------------------------
+  function exportFit(model) {
+    const parsed = model.parsed;
+    const src = parsed.bytes;
+
+    // Map: which original records are length messages (the contiguous block we replace)
+    const lengthRecSet = new Set(parsed.records.filter(r => !r.isDefinition && r.globalNum === MESG_LENGTH));
+    const firstLengthRec = parsed.records.find(r => lengthRecSet.has(r));
+
+    const activeCount = model.lengths.filter(l => l.active).length;
+    const totalCount = model.lengths.length;
+    const totalStrokes = model.lengths.reduce((a, l) => a + (l.strokes || 0), 0);
+    const distRaw = Math.round(activeCount * model.poolLenM * 100);
+
+    // Encode one length message from its template record + edited values.
+    function encodeLength(len, seqIndex) {
+      const tpl = len.recRef;
+      const size = tpl.rawEnd - tpl.rawStart;
+      const buf = src.slice(tpl.rawStart, tpl.rawEnd); // Uint8Array copy
+      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      const durS = len.elapsedMs / 1000.0;
+      const speedRaw = durS > 0 ? Math.round((model.poolLenM / durS) * 1000) : 0;
+      const cadRaw = durS > 0 ? Math.round(len.strokes / (durS / 60.0)) : 0;
+      writeField(dv, tpl, L_MESSAGE_INDEX, seqIndex);
+      writeField(dv, tpl, L_TOTAL_ELAPSED_TIME, len.elapsedMs);
+      writeField(dv, tpl, L_TOTAL_TIMER_TIME, len.timerMs);
+      writeField(dv, tpl, L_TOTAL_STROKES, len.strokes);
+      writeField(dv, tpl, L_AVG_SPEED, speedRaw);
+      if (tpl.fieldOffsets[L_AVG_SWIM_CADENCE]) writeField(dv, tpl, L_AVG_SWIM_CADENCE, cadRaw);
+      if (len.startTime != null) writeField(dv, tpl, L_START_TIME, len.startTime);
+      if (len.timestamp != null) writeField(dv, tpl, L_TIMESTAMP, len.timestamp);
+      if (len.calories != null && tpl.fieldOffsets[L_TOTAL_CALORIES]) {
+        writeField(dv, tpl, L_TOTAL_CALORIES, len.calories);
+      }
+      return buf;
+    }
+
+    // Encode lap / session with patched aggregates.
+    function encodePatched(rec, patches) {
+      const buf = src.slice(rec.rawStart, rec.rawEnd);
+      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      for (const [defNum, value] of patches) {
+        if (rec.fieldOffsets[defNum]) writeField(dv, rec, defNum, value);
+      }
+      return buf;
+    }
+
+    // Walk original records; rebuild the data section.
+    const parts = [];
+    let emittedLengths = false;
+    let seq = 0;
+    for (const rec of parsed.records) {
+      if (!rec.isDefinition && lengthRecSet.has(rec)) {
+        // Replace the whole length block once, at the position of the first length.
+        if (!emittedLengths) {
+          for (const len of model.lengths) parts.push(encodeLength(len, seq++));
+          emittedLengths = true;
+        }
+        // consumed/removed original length slots emit nothing
+        continue;
+      }
+      if (!rec.isDefinition && rec === model.lapRec) {
+        parts.push(encodePatched(rec, [
+          [LAP_TOTAL_DISTANCE, distRaw],
+          [LAP_TOTAL_CYCLES, totalStrokes],
+          [LAP_NUM_LENGTHS, totalCount],
+          [LAP_NUM_ACTIVE_LENGTHS, activeCount],
+        ]));
+        continue;
+      }
+      if (!rec.isDefinition && rec === model.sesRec) {
+        parts.push(encodePatched(rec, [
+          [SES_TOTAL_DISTANCE, distRaw],
+          [SES_TOTAL_CYCLES, totalStrokes],
+          [SES_NUM_ACTIVE_LENGTHS, activeCount],
+        ]));
+        continue;
+      }
+      parts.push(src.slice(rec.rawStart, rec.rawEnd));
+    }
+
+    // Assemble: header + data + trailing CRC.
+    const dataLen = parts.reduce((a, p) => a + p.length, 0);
+    const out = new Uint8Array(parsed.headerSize + dataLen + 2);
+    // copy original header verbatim, then fix data_size + header CRC
+    out.set(src.slice(0, parsed.headerSize), 0);
+    const odv = new DataView(out.buffer);
+    odv.setUint32(4, dataLen, true);
+    if (parsed.headerSize === 14) {
+      const hcrc = crc16(out, 0, 12);
+      odv.setUint16(12, hcrc, true);
+    }
+    // data section
+    let cursor = parsed.headerSize;
+    for (const p of parts) { out.set(p, cursor); cursor += p.length; }
+    // trailing file CRC over header+data
+    const fcrc = crc16(out, 0, cursor);
+    odv.setUint16(cursor, fcrc, true);
+
+    return out;
+  }
+
+  const api = {
+    parse, buildModel, lengthMetrics, medianActiveDuration,
+    mergeInto, mergeWithPrevious, mergeWithNext, mergeSelected,
+    splitLength, deleteLengths, setStroke, setStrokeAll, autoMerge,
+    findAbnormalPace, snapshot, restore, summary, exportFit, readField,
+    SWIM_STROKE_NAMES,
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.FitCore = api;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* ui.js — Visual editor UI layer over FitCore. No build magic: plain DOM. */
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const FIT_EPOCH = 631065600; // seconds between Unix and FIT epoch (1989-12-31 UTC)
+  const strokeName = FitCore.SWIM_STROKE_NAMES;
+  const strokeZh = { 0:'自由式',1:'仰式',2:'蛙式',3:'蝶式',4:'drill',5:'混合',6:'個人混合',255:'—' };
+
+  let originalAB = null, model = null, fileName = 'activity.fit';
+  let selected = new Set();      // selected length ids
+  let history = [];              // undo stack of snapshots
+
+  // ---- formatting ----
+  function fitToDate(fitTs) { return fitTs == null ? null : new Date((FIT_EPOCH + fitTs) * 1000); }
+  function fmtClock(fitTs) {
+    const d = fitToDate(fitTs); if (!d) return '—';
+    return d.toLocaleTimeString('zh-Hant', { hour12: false });
+  }
+  function fmtDateTime(fitTs) {
+    const d = fitToDate(fitTs); if (!d) return '—';
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function fmtDur(s) { const m = Math.floor(s/60), r = s-m*60; return m>0 ? `${m}:${r.toFixed(1).padStart(4,'0')}` : `${r.toFixed(1)}s`; }
+  function fmtMMSS(s) { const m = Math.floor(s/60), r = Math.round(s-m*60); return `${m}:${String(r).padStart(2,'0')}`; }
+  function fmtPace(sp100) { return (!sp100||!isFinite(sp100)) ? '—' : fmtMMSS(sp100); }
+
+  // ---- load / reset ----
+  function loadBuffer(ab, name) { originalAB = ab.slice(0); fileName = name || 'activity.fit'; rebuild(ab); }
+  function rebuild(ab) {
+    const parsed = FitCore.parse(ab);
+    model = FitCore.buildModel(parsed);
+    selected.clear(); history = [];
+    $('app').classList.remove('hidden'); $('drop').classList.add('hidden');
+    $('fname').textContent = fileName;
+    renderAll();
+    log('已載入：' + model.lengths.length + ' 趟，泳池 ' + model.poolLenM + ' m。');
+    log('中位趟時間 ' + FitCore.medianActiveDuration(model).toFixed(1) + ' s。可直接按「⚡ 自動合併短趟」。');
+  }
+  function pushHistory() { history.push(FitCore.snapshot(model)); if (history.length > 100) history.shift(); $('undoBtn').disabled = false; }
+  function shortThreshold() { return parseFloat($('thresh').value) || 30; }
+
+  // ---- selection helpers ----
+  function selectedIndices() {
+    const out = [];
+    model.lengths.forEach((L, i) => { if (selected.has(L.id)) out.push(i); });
+    return out;
+  }
+  function updateSelInfo() {
+    const n = selected.size;
+    $('selinfo').innerHTML = n ? `已選取 <b>${n}</b> 段` : '未選取';
+    $('mergeBtn').disabled = n < 2 || !contiguousSelectable();
+    $('splitBtn').disabled = n < 1;
+    $('delBtn').disabled = n < 1;
+    $('strokeSelBtn').disabled = n < 1;
+  }
+  function contiguousSelectable() {
+    const idx = selectedIndices();
+    return idx.some((v, k) => k > 0 && v === idx[k-1] + 1); // at least one adjacent pair
+  }
+
+  // ---- render ----
+  function renderAll() { renderCards(); renderChart(); renderTable(); updateSelInfo(); renderLegend(); }
+
+  function renderCards() {
+    const s = FitCore.summary(model);
+    const origActive = model.parsed.records.filter(r => !r.isDefinition && r.globalNum === 101).length;
+    const cards = [
+      ['Workout Date', fmtDateTime(s.startTime), null],
+      ['Pool Length', s.poolLenM + 'm', null],
+      ['Total Time', fmtMMSS(s.totalTimerMs/1000), null],
+      ['Total Lengths', s.activeLengths, origActive],
+      ['Total Distance', s.distance + 'm', origActive * s.poolLenM + 'm'],
+      ['Avg. Pace', fmtPace((s.totalTimerMs/1000)/(s.distance/100)) + '/100m', null],
+      ['Avg. SPL', s.avgSpl.toFixed(1) + '/length', null],
+      ['Avg. Dist/Stroke', s.distPerStroke.toFixed(2) + 'm', null],
+      ['Avg. Heartrate', s.avgHr != null ? s.avgHr + ' bpm' : '—', null],
+      ['Calories', s.calories != null ? s.calories + ' kcal' : '—', null],
+    ];
+    $('cards').innerHTML = cards.map(([k,v,orig]) => {
+      let d = '';
+      if (orig != null) d = (String(v)!==String(orig)) ? `<div class="d up">原始 ${orig}</div>` : `<div class="d same">未變動</div>`;
+      return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div>${d}</div>`;
+    }).join('');
+  }
+
+  function renderLegend() {
+    const used = [...new Set(model.lengths.map(l => l.swimStroke))].filter(s => s != null && s !== 255);
+    $('legend').innerHTML = used.map(s => `<span><i style="background:var(--s${s})"></i>${strokeZh[s]||strokeName[s]}</span>`).join('')
+      + `<span><i style="background:var(--bg);border:1.5px solid var(--sel)"></i>已選取</span>`;
+  }
+
+  function renderChart() {
+    const svg = $('chart');
+    const n = model.lengths.length;
+    const H = 380, padL = 44, padR = 12, padT = 14, padB = 30;
+    const W = Math.max(svg.clientWidth || 900, padL + padR + n * 8);
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const thr = shortThreshold();
+
+    const durs = model.lengths.map(l => l.elapsedMs / 1000);
+    const maxDur = Math.max(70, Math.ceil(Math.max(...durs, 0) / 10) * 10);
+    const y = v => padT + plotH - (v / maxDur) * plotH;
+    const bw = plotW / n;
+    const barW = Math.max(2, bw * 0.78);
+
+    let el = '';
+    // y grid + labels
+    for (let v = 0; v <= maxDur; v += 10) {
+      el += `<line class="grid" x1="${padL}" y1="${y(v)}" x2="${W-padR}" y2="${y(v)}"/>`;
+      el += `<text class="axis" x="${padL-6}" y="${y(v)+3}" text-anchor="end">${v}</text>`;
+    }
+    el += `<text class="axis" transform="translate(12,${padT+plotH/2}) rotate(-90)" text-anchor="middle">Duration (seconds)</text>`;
+    // bars
+    model.lengths.forEach((L, i) => {
+      const d = L.elapsedMs / 1000;
+      const x = padL + i * bw + (bw - barW) / 2;
+      const h = plotH - (y(d) - padT);
+      const isSel = selected.has(L.id);
+      const col = `var(--s${L.swimStroke != null && L.swimStroke <= 6 ? L.swimStroke : 4})`;
+      const isShort = L.active && d < thr;
+      const stroke = isSel ? 'var(--sel)' : (isShort ? 'var(--warn)' : 'rgba(0,0,0,.15)');
+      const sw = isSel ? 2.5 : (isShort ? 1.5 : 0.5);
+      const op = L.active ? 1 : 0.4;
+      el += `<rect class="bar" data-i="${i}" x="${x.toFixed(1)}" y="${y(d).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="1.5" fill="${col}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
+      // lap boundary dashed line before this length (interval start)
+      if (L.lapStart) {
+        const lx = padL + i * bw + 0.5;
+        el += `<line class="lap" x1="${lx.toFixed(1)}" y1="${padT}" x2="${lx.toFixed(1)}" y2="${padT+plotH}"/>`;
+      }
+      // x labels every few
+      const step = n > 40 ? 2 : 1;
+      if (i % step === 0) el += `<text class="axis" x="${(x+barW/2).toFixed(1)}" y="${H-padB+14}" text-anchor="middle">${i+1}</text>`;
+    });
+    el += `<text class="axis" x="${padL+plotW/2}" y="${H-2}" text-anchor="middle">Length</text>`;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('preserveAspectRatio', 'xMinYMid meet');
+    svg.style.width = W + 'px';
+    svg.innerHTML = el;
+    attachChartEvents();
+  }
+
+  // Wire chart interaction once; the SVG node itself is stable across renders.
+  function attachChartEvents() {
+    const svg = $('chart');
+    if (svg._wired) return;
+    svg._wired = true;
+    svg.addEventListener('dblclick', e => {
+      const bar = e.target.closest('.bar'); if (!bar) return;
+      const i = parseInt(bar.dataset.i, 10);
+      pushHistory(); FitCore.splitLength(model, i);
+      log(`第 ${i+1} 段（點兩下）平均分割成兩段。`);
+      selected.clear(); renderAll();
+    });
+    svg.addEventListener('click', e => {
+      const bar = e.target.closest('.bar'); if (!bar) { selected.clear(); renderAll(); return; }
+      const i = parseInt(bar.dataset.i, 10);
+      const L = model.lengths[i];
+      if (e.shiftKey && selected.size) {
+        // range select from last anchor
+        const anchor = model.lengths.findIndex(x => x.id === (svg._anchorId ?? L.id));
+        const [a, b] = [Math.min(anchor, i), Math.max(anchor, i)];
+        for (let k = a; k <= b; k++) selected.add(model.lengths[k].id);
+      } else {
+        if (selected.has(L.id)) selected.delete(L.id); else selected.add(L.id);
+        svg._anchorId = L.id;
+      }
+      renderAll();
+    });
+    svg.addEventListener('mousemove', e => {
+      const bar = e.target.closest('.bar'); const tip = $('tip');
+      if (!bar) { tip.style.display = 'none'; return; }
+      const i = parseInt(bar.dataset.i, 10), L = model.lengths[i], m = FitCore.lengthMetrics(model, L);
+      tip.innerHTML = `<b>#${i+1}</b> ${strokeZh[L.swimStroke]||strokeName[L.swimStroke]}<br>時間 ${fmtDur(m.durationS)}｜划手 ${L.strokes}<br>速度 ${m.speed.toFixed(3)} m/s｜配速 ${fmtPace(m.pacePer100)}/100m${L.active?'':'<br>(休息/idle)'}`;
+      tip.style.display = 'block';
+      tip.style.left = Math.min(e.clientX + 14, innerWidth - 190) + 'px';
+      tip.style.top = (e.clientY + 14) + 'px';
+    });
+    svg.addEventListener('mouseleave', () => { $('tip').style.display = 'none'; });
+  }
+
+  function renderTable() {
+    const thr = shortThreshold();
+    $('rows').innerHTML = model.lengths.map((L, i) => {
+      const m = FitCore.lengthMetrics(model, L);
+      const isShort = L.active && m.durationS < thr;
+      const isFast = L.active && m.speed > 0.9 && m.durationS < thr;
+      const cls = (isFast ? 'fast ' : isShort ? 'short ' : '') + (selected.has(L.id) ? 'selected' : '');
+      const flag = isFast ? '<span class="badge fast">配速異常</span>' : isShort ? '<span class="badge short">偏短</span>' : '';
+      const sel = `<input type="checkbox" data-act="sel" data-i="${i}" ${selected.has(L.id)?'checked':''}>`;
+      return `<tr class="${cls}">
+        <td>${sel}</td><td>${i+1}${L.lapStart?' ▸':''}</td>
+        <td class="l">${fmtClock(L.startTime)}</td>
+        <td class="l">${strokeZh[L.swimStroke]||strokeName[L.swimStroke]}</td>
+        <td>${fmtDur(m.durationS)}</td><td>${L.strokes}</td>
+        <td>${m.speed.toFixed(3)} m/s</td><td>${fmtPace(m.pacePer100)}</td><td>${Math.round(m.cadence)}</td>
+        <td>${flag}</td>
+        <td class="actions">
+          <button class="small" data-act="up" data-i="${i}" ${i===0?'disabled':''}>▲併上</button>
+          <button class="small" data-act="down" data-i="${i}" ${i===model.lengths.length-1?'disabled':''}>▼併下</button>
+          <button class="small" data-act="split" data-i="${i}">✂</button>
+        </td></tr>`;
+    }).join('');
+  }
+
+  function log(msg, cls) { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = msg; $('log').prepend(d); }
+
+  // ---- actions ----
+  function doMergeSelected() {
+    const idx = selectedIndices(); if (idx.length < 2) return;
+    pushHistory(); const removed = FitCore.mergeSelected(model, idx);
+    log(`合併選取：移除 ${removed} 段。`); selected.clear(); renderAll();
+  }
+  function doSplitSelected() {
+    const idx = selectedIndices(); if (!idx.length) return;
+    pushHistory();
+    // split from right to left so indices stay valid
+    idx.sort((a,b)=>b-a).forEach(i => FitCore.splitLength(model, i));
+    log(`分割選取：${idx.length} 段各分成兩段。`); selected.clear(); renderAll();
+  }
+  function doDeleteSelected() {
+    const idx = selectedIndices(); if (!idx.length) return;
+    pushHistory(); const n = FitCore.deleteLengths(model, idx);
+    log(`刪除 ${n} 段。`); selected.clear(); renderAll();
+  }
+  function doDeleteFast() {
+    const idx = FitCore.findAbnormalPace(model, shortThreshold());
+    if (!idx.length) { log('沒有偵測到配速異常的短趟。', 'warn'); return; }
+    const lostS = idx.reduce((a, i) => a + model.lengths[i].elapsedMs / 1000, 0);
+    if (!confirm(`偵測到 ${idx.length} 段配速異常的短趟（合計 ${lostS.toFixed(1)} 秒）。\n刪除後總距離會少 ${idx.length * model.poolLenM} m。\n\n注意：若這些其實是被拆開的真實趟，用「合併」比刪除更正確。確定刪除？`)) return;
+    pushHistory(); const n = FitCore.deleteLengths(model, idx);
+    log(`刪除 ${n} 段配速異常趟。`); selected.clear(); renderAll();
+  }
+  function doStroke(all) {
+    const stroke = parseInt($('strokeSel').value, 10);
+    if (all) { pushHistory(); FitCore.setStrokeAll(model, stroke); log(`一鍵：全部 ${model.lengths.length} 段改為 ${strokeZh[stroke]}。`); }
+    else { const idx = selectedIndices(); if (!idx.length) return; pushHistory(); FitCore.setStroke(model, idx, stroke); log(`選取 ${idx.length} 段改為 ${strokeZh[stroke]}。`); }
+    renderAll();
+  }
+  function doAuto() {
+    pushHistory();
+    const res = FitCore.autoMerge(model, { shortSeconds: shortThreshold() });
+    res.log.forEach(x => log(x, x.startsWith('⚠') ? 'warn' : null));
+    log(`自動合併完成（門檻 ${res.shortThresh.toFixed(1)}s，中位 ${res.median.toFixed(1)}s）。`);
+    selected.clear(); renderAll();
+  }
+  function doUndo() {
+    if (!history.length) return;
+    FitCore.restore(model, history.pop());
+    $('undoBtn').disabled = history.length === 0;
+    selected.clear(); log('已復原上一步。'); renderAll();
+  }
+  function doReset() { if (originalAB) { rebuild(originalAB.slice(0)); log('已還原到原始資料。'); } }
+  function doDownload() {
+    const out = FitCore.exportFit(model);
+    const blob = new Blob([out], { type: 'application/octet-stream' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName.replace(/\.fit$/i, '') + '_fixed.fit';
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    const s = FitCore.summary(model);
+    log(`已下載修正檔：${a.download}（${s.activeLengths} 趟，${s.distance} m）。`);
+  }
+
+  // ---- wire up ----
+  $('mergeBtn').addEventListener('click', doMergeSelected);
+  $('splitBtn').addEventListener('click', doSplitSelected);
+  $('delBtn').addEventListener('click', doDeleteSelected);
+  $('delFastBtn').addEventListener('click', doDeleteFast);
+  $('strokeSelBtn').addEventListener('click', () => doStroke(false));
+  $('strokeAllBtn').addEventListener('click', () => doStroke(true));
+  $('autoBtn').addEventListener('click', doAuto);
+  $('undoBtn').addEventListener('click', doUndo);
+  $('resetBtn').addEventListener('click', doReset);
+  $('dlBtn').addEventListener('click', doDownload);
+  $('thresh').addEventListener('input', () => { renderChart(); renderTable(); });
+  window.addEventListener('resize', () => { if (model) renderChart(); });
+
+  $('rows').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const i = parseInt(btn.dataset.i, 10), act = btn.dataset.act;
+    if (act === 'up') { pushHistory(); FitCore.mergeWithPrevious(model, i); log(`第 ${i+1} 段併入上一段。`); selected.clear(); renderAll(); }
+    else if (act === 'down') { pushHistory(); FitCore.mergeWithNext(model, i); log(`第 ${i+1} 段併入下一段。`); selected.clear(); renderAll(); }
+    else if (act === 'split') {
+      const L = model.lengths[i], totalS = (L.elapsedMs/1000).toFixed(1);
+      const ans = prompt(`把第 ${i+1} 段 (${totalS}s) 分成兩段。\n輸入第一段秒數（留空＝平分）：`, (L.elapsedMs/2000).toFixed(1));
+      if (ans === null) return;
+      pushHistory(); FitCore.splitLength(model, i, ans.trim()===''?null:parseFloat(ans));
+      log(`第 ${i+1} 段分割。`); renderAll();
+    }
+  });
+  $('rows').addEventListener('change', e => {
+    const cb = e.target.closest('input[data-act="sel"]'); if (!cb) return;
+    const L = model.lengths[parseInt(cb.dataset.i, 10)];
+    if (cb.checked) selected.add(L.id); else selected.delete(L.id);
+    renderChart(); updateSelInfo();
+    e.target.closest('tr').classList.toggle('selected', cb.checked);
+  });
+
+  // ---- file input / drag drop ----
+  const drop = $('drop'), fileInput = $('file');
+  drop.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) readFile(f); });
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hover'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hover'); }));
+  drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+  document.addEventListener('dragover', e => { if (!$('app').classList.contains('hidden')) e.preventDefault(); });
+  document.addEventListener('drop', e => { if (!$('app').classList.contains('hidden')) { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) readFile(f); } });
+  function readFile(f) { const r = new FileReader(); r.onload = () => { try { loadBuffer(r.result, f.name); } catch (err) { alert('無法解析：' + err.message); } }; r.readAsArrayBuffer(f); }
+
+  // ---- Electron file-association hook (no-op in a plain browser) ----
+  if (window.electronAPI && window.electronAPI.onOpenFile) {
+    window.electronAPI.onOpenFile((bytes, name) => {
+      try {
+        const ab = bytes.buffer ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) : bytes;
+        loadBuffer(ab, name || 'activity.fit');
+      } catch (err) { alert('無法解析：' + err.message); }
+    });
+  }
+})();
+
+</script>
+</body>
+</html>

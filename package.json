@@ -1,0 +1,49 @@
+{
+  "name": "swim-fit-editor",
+  "version": "1.0.0",
+  "description": "游泳 FIT 趟數修正器 — Garmin 游泳分趟（length）修正工具",
+  "author": "clin",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win --dir",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.clin.swimfiteditor",
+    "productName": "SwimFitEditor",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html"
+    ],
+    "directories": {
+      "output": "dist-app"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "游泳FIT修正器"
+    },
+    "fileAssociations": [
+      {
+        "ext": "fit",
+        "name": "Garmin FIT Activity",
+        "description": "Garmin FIT swim activity",
+        "role": "Editor"
+      }
+    ]
+  }
+}
