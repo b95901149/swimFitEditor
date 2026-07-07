@@ -1,0 +1,33 @@
+{
+  "before": {
+    "lengths": {
+      "v": "76",
+      "d": "未變動"
+    },
+    "distance": {
+      "v": "1900m",
+      "d": "未變動"
+    },
+    "pace": {
+      "v": "3:11/100m",
+      "d": ""
+    },
+    "file": "23505296923_ACTIVITY.fit"
+  },
+  "after": {
+    "lengths": {
+      "v": "66",
+      "d": "原始 76"
+    },
+    "distance": {
+      "v": "1650m",
+      "d": "原始 1900m"
+    },
+    "pace": {
+      "v": "3:40/100m",
+      "d": ""
+    },
+    "file": "23505296923_ACTIVITY.fit"
+  },
+  "thresholdSec": 30
+}
