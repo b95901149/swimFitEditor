@@ -14,6 +14,21 @@
     },
     "file": "23505296923_ACTIVITY.fit"
   },
+  "afterMerge": {
+    "lengths": {
+      "v": "66",
+      "d": "原始 76"
+    },
+    "distance": {
+      "v": "1650m",
+      "d": "原始 1900m"
+    },
+    "pace": {
+      "v": "3:40/100m",
+      "d": ""
+    },
+    "file": "23505296923_ACTIVITY.fit"
+  },
   "after": {
     "lengths": {
       "v": "66",
@@ -29,5 +44,6 @@
     },
     "file": "23505296923_ACTIVITY.fit"
   },
-  "thresholdSec": 30
+  "thresholdSec": 30,
+  "strokeAll": "breaststroke (蛙式)"
 }

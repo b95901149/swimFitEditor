@@ -100,6 +100,16 @@ async function runDemoFlow(win) {
   await shot(win, '06-summary.png');
 }
 
+async function applyStrokeAll(win, strokeValue = 2) {
+  await win.webContents.executeJavaScript(`
+    (() => {
+      document.getElementById('strokeSel').value = String(${strokeValue});
+      document.getElementById('strokeAllBtn').click();
+    })()
+  `);
+  await sleep(400);
+}
+
 async function runExampleFlow(win) {
   await win.webContents.executeJavaScript(`document.getElementById('resetBtn').click()`);
   await sleep(100);
@@ -124,14 +134,22 @@ async function runExampleFlow(win) {
 
   await win.webContents.executeJavaScript(`document.getElementById('autoBtn').click()`);
   await sleep(500);
+  const afterMerge = await readStats(win);
+  console.log('example after merge', afterMerge);
+
+  await applyStrokeAll(win, 2);
   const after = await readStats(win);
-  console.log('example after', after);
+  console.log('example after merge + stroke all (breaststroke)', after);
 
   await win.webContents.executeJavaScript(`window.scrollTo(0, 0)`);
   await shot(win, '10-example-after-merge.png');
 
   await scrollChartToLength(win, 13);
   await shot(win, '11-example-short-bars-after.png');
+
+  await win.webContents.executeJavaScript(`window.scrollTo(0, 0)`);
+  await sleep(150);
+  await shot(win, '13-example-stroke-all-result.png');
 
   await win.webContents.executeJavaScript(`
     (() => {
@@ -149,7 +167,13 @@ async function runExampleFlow(win) {
 
   fs.writeFileSync(
     path.join(ROOT, 'fixtures', 'example-merge-stats.json'),
-    JSON.stringify({ before, after, thresholdSec: 30 }, null, 2),
+    JSON.stringify({
+      before,
+      afterMerge,
+      after,
+      thresholdSec: 30,
+      strokeAll: 'breaststroke (蛙式)',
+    }, null, 2),
   );
 }
 
